@@ -1,0 +1,25 @@
+name: ecs
+version: 0.1.0
+
+authors:
+  - D. Scott Boggs <scott@tams.tech>
+
+dependencies:
+  textwrap:
+    github: dscottboggs/textwrap
+
+development_dependencies:
+  ameba:
+    github: veelenga/ameba
+
+targets:
+  parser:
+    main: src/cli.cr
+
+scripts:
+  postinstall:
+    make ecs
+
+crystal: 0.34.0
+
+license: MIT

@@ -1,0 +1,89 @@
+<%- if type.empty? -%>
+# The top-level of an ECS log entry.
+struct ECS::LogEntry
+<%- else -%>
+
+<%- if t = parent_type -%>
+struct ECS::LogEntry::<%= t %>
+<%- else -%>
+struct ECS::LogEntry
+<%- end -%>
+
+  <%- if sub_type == "As" -%>
+  #
+  # Note that Crystal does not allow redefining the `#as` method of Object.
+  @[JSON::Field(key: "as")]
+  property _as : As?
+
+  # A chainable setter for @as.
+  def _as(value : As)
+    @_as = value
+    self
+  end
+
+  # Initialize a new As, yield it to the block
+  def _as
+    @_as = yield As.new
+    self
+  end
+
+  <%- else -%>
+
+  property <%= sub_type.downcase %> : <%= sub_type %>?
+
+  # A chainable setter for <%= sub_type.downcase %>
+  def <%=sub_type.downcase%>(value : <%= sub_type %>)
+    @<%=sub_type.downcase%> = value
+    self
+  end
+
+  # Initialize a new <%= sub_type %>, yield it to the block
+  def <%= sub_type.downcase %>
+    @<%= sub_type.downcase %> = yield <%= sub_type %>.new
+    self
+  end
+
+  <%- end -%>
+
+end
+
+struct ECS::LogEntry::<%= type %>
+<%- end -%>
+  include JSON::Serializable
+
+  # Initialize all values as nil
+  def initialize; end
+
+  <%- sections.each do |section| %>
+  # <%= section.flat_name %>
+  #
+<%= section.docs %>
+  #
+  # Level: <%= section.level %>
+  # Type: <%= section.type %>
+  <%- if section.object_type -%>
+  # Object Type: <%= section.object_type %>
+  <%- end -%>
+  <%- if section.example -%>
+  # Example:
+  # ```
+  # <%= section.example.to_s %>
+  # ```
+  <%- end -%>
+  <%-= section.decorator -%>
+  <%- if section.name == "as" -%>
+  #
+  # Note that Crystal does not allow redefining the `#as` method of Object.
+  @[JSON::Field(key: "as")]
+  property _as : <%= section.type.crystal_type %>
+  <%- else -%>
+  property <%= section.name %> : <%= section.type.crystal_type %>?
+  <%- end -%>
+
+  # A chainable setter for <%= section.name %>
+  def <%= section.name %>(new_value : <%= section.type.crystal_type %>)
+    @<%= section.name %> = new_value
+    self
+  end
+  <%- end -%>
+end

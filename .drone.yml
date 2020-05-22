@@ -1,0 +1,38 @@
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: format
+  image: jrei/crystal-alpine
+  commands: [ crystal tool format --check ]
+- name: build
+  image: jrei/crystal-alpine
+  volumes:
+  - name: cache
+    path: /root/.cache
+  commands:
+  - apk add curl
+  - shards install
+  - shards build --static
+- name: lint
+  image: jrei/crystal-alpine
+  commands:
+  - bin/ameba --except Lint/UnusedArgument,Metrics/CyclomaticComplexity
+- name: release
+  when:
+    branch: [ master ]
+    event: [ push ]
+  image: alpine
+  commands:
+  - export COMMIT_MSG="$(git log --pretty=oneline | cut -d' ' -f2-)"
+  - export CURRENT_TAG="$(git tag | tail -n1)"
+  - '
+case $COMMIT_MESSAGE in
+release=patch*) git tag $(cut -d. -f-2 <<< $CURRENT_TAG).((1 + `cut -d. -f3 <<< $CURRENT_TAG`))  ;;
+release=minor*) git tag $(cut -d. -f1 <<< $CURRENT_TAG).((1 + `cut -d. -f2 <<< $CURRENT_TAG`)).0 ;;
+release=major*) git tag v((1 + `cut -d. -f2 <<< $CURRENT_TAG | sed 's/^v//'`)).0.0               ;;
+esac
