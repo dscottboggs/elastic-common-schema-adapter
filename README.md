@@ -21,13 +21,24 @@ anything except store those generated types.
 
 ```crystal
 require "ecs"
+
+event = ECS::LogEntry.new
+  .timestamp(Time.utc)
+  .http(&.version("1.1")
+    .request(&.method("GET").bytes(1234))
+    .response(&.status_code(200)
+      .bytes(1234)
+      .body(&.content("OK."))))
+
+puts event.to_json
+```
+The above snippet prints out
+```json
+{"@timestamp":"2020-05-23T11:55:28Z","http":{"version":"1.1","request":{"bytes":1234,"method":"GET"},"response":{"bytes":1234,"status_code":200,"body":{"content":"OK."}}}}
 ```
 
-TODO: Write usage instructions here
-
 ## Development
-
-TODO: Write development instructions here
+**DO NOT** make changes to `ecs.cr`. It is automatically generated from `section.ecr`. See the `Makefile` for more details. If you have a recommendation, please make changes to `parser.cr` or `section.ecr` and run `make` before committing to regenerate `ecs.cr`.
 
 ## Contributing
 
